@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>ระบบบริการวิชาการ มข. (Prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: ทางการแต่เป็นมิตร แบบเว็บมหาวิทยาลัย ตาม Demo Canva
+   IDEA: พอร์ทัลรายงานผลงานของมหาวิทยาลัย — หัวเว็บ + เมนูน้ำเงิน + การ์ดสรุป + แผงคำอธิบายขวา
+   PICTURE: ภาพอาคารวาดด้วย SVG ในแถบค้นหา, การ์ดสถิติสีพาสเทล 4 สี
+   COLOUR/TYPE: น้ำเงิน มข. + ส้มหลังคา, Prompt หัวข้อ / Sarabun เนื้อหา
+   LAYOUT: เนื้อหาซ้าย + แผงอธิบายขวา (พับได้), มือถือเรียงลงมา */
+:root{color-scheme:light;--blue:#1453b5;--blue2:#0b3d8c;--sky:#eaf2ff;--ink:#14213d;--mute:#5b6b85;--line:#dbe5f3;--bg:#f3f7fd;--card:#fff;--orange:#f08a1c;--green:#1f9d55;--purple:#7b4fd6;--red:#c8372d}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Sarabun,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3,.ft{font-family:Prompt,Sarabun,sans-serif;line-height:1.2;margin:0}
+a{color:var(--blue)}button,select,input{font:inherit}
+.demo-bar{background:#fff4e0;color:#8a4b00;font-size:13px;text-align:center;padding:6px 12px;border-bottom:1px solid #f6d9a8}
+header.top{background:#fff;display:flex;align-items:center;gap:18px;padding:12px max(3vw,16px);border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+.emb{display:flex;align-items:center;gap:10px;flex:none}
+.emb .mark{width:46px;height:52px;border-radius:8px 8px 22px 22px;background:linear-gradient(#e2572b,#b7301c);color:#fff;display:grid;place-items:center;font:700 15px Prompt}
+.emb b{display:block;font:700 22px Prompt;color:var(--red);line-height:1}.emb small{font-size:12px;color:var(--mute)}
+.ttl{border-left:2px solid var(--line);padding-left:18px}
+.ttl h1{font-size:clamp(17px,2.1vw,25px);color:var(--blue2)}.ttl p{margin:2px 0 0;color:var(--mute);font-size:14px}
+.top svg{position:absolute;right:0;bottom:0;height:100%;opacity:.95}
+nav.menu{background:linear-gradient(90deg,var(--blue2),var(--blue));display:flex;flex-wrap:wrap;gap:4px;padding:6px max(3vw,16px);position:sticky;top:0;z-index:5}
+nav.menu a{color:#e6efff;text-decoration:none;padding:9px 14px;border-radius:8px;font:500 15px Prompt;min-height:40px;display:flex;align-items:center;gap:7px}
+nav.menu a:hover{background:#ffffff1f}nav.menu a.on{background:#fff;color:var(--blue2)}
+nav.menu .sp{flex:1}
+nav.menu button{background:#ffffff26;color:#fff;border:0;border-radius:8px;padding:8px 12px;cursor:pointer}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:22px;max-width:1320px;margin:0 auto;padding:22px max(3vw,16px) 48px}
+.wrap.noaside{grid-template-columns:minmax(0,1fr)}.wrap.noaside aside{display:none}
+.ph{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.ph h2{font-size:clamp(24px,2.6vw,32px);color:var(--blue2);border-left:5px solid var(--blue);padding-left:12px}
+.ph p{margin:4px 0 0 17px;color:var(--mute)}
+.fy{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px 10px}
+select,input[type=text],input[type=password]{border:1px solid #c9d6ea;border-radius:10px;padding:9px 12px;background:#fff;color:var(--ink);font-size:16px;min-height:44px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:18px}
+.kpi{border-radius:16px;padding:16px 18px;display:flex;gap:14px;align-items:center;position:relative;overflow:hidden}
+.kpi i{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;flex:none;color:#fff}
+.kpi b{font:700 clamp(24px,2.4vw,32px) Prompt;display:block;line-height:1.1}.kpi b span{font-size:17px;font-weight:600}
+.kpi small{color:var(--mute);font-size:14px}
+.k1{background:#e5efff}.k1 i{background:var(--blue)}.k1 b{color:var(--blue2)}
+.k2{background:#e3f6ea}.k2 i{background:var(--green)}.k2 b{color:#146c3b}
+.k3{background:#fff0dd}.k3 i{background:var(--orange)}.k3 b{color:#b35c00}
+.k4{background:#f0e9ff}.k4 i{background:var(--purple)}.k4 b{color:#5a32b0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.search{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);border-radius:18px;overflow:hidden;background:linear-gradient(120deg,#dceaff,#f3f8ff);border:1px solid var(--line);margin-bottom:22px}
+.search .in{padding:22px}.search h3{font-size:24px;color:var(--blue2)}.search p{color:var(--mute);margin:4px 0 14px}
+.search .row{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:0;border-radius:10px;padding:10px 18px;min-height:44px;cursor:pointer;font:500 15px Prompt;display:inline-flex;align-items:center;gap:8px;justify-content:center;text-decoration:none}
+.bp{background:var(--blue);color:#fff}.bp:hover{background:var(--blue2)}
+.bo{background:#fff;color:var(--blue2);border:1.5px solid var(--blue)}
+.bs{padding:6px 12px;min-height:34px;font-size:14px}
+.search svg{width:100%;height:100%;min-height:170px;display:block}
+.sec{display:flex;justify-content:space-between;align-items:center;margin:4px 0 12px}
+.sec h3{font-size:21px;color:var(--blue2)}
+.facs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.fac{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;transition:transform .15s,box-shadow .15s;display:flex;flex-direction:column;gap:10px}
+.fac:hover{transform:translateY(-2px);box-shadow:0 8px 20px #1453b51f}
+.fac .h{display:flex;gap:10px;align-items:center}
+.fac .h span{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font:600 15px Prompt;color:#fff;flex:none}
+.fac h4{margin:0;font:600 16px Prompt}
+.fac dl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0}
+.fac dt{font-size:12px;color:var(--mute)}.fac dd{margin:0;font:600 16px Prompt;color:var(--blue2);white-space:nowrap}
+.bar{height:6px;background:#e8eef8;border-radius:4px;overflow:hidden}.bar i{display:block;height:100%;background:var(--blue)}
+.filters{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px}
+.filters label{display:flex;flex-direction:column;font-size:13px;color:var(--mute);gap:3px}
+.filters .q{flex:1 1 280px;display:flex;gap:8px}.filters .q input{flex:1}
+.res{font:600 17px Prompt;margin:0 0 10px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+th{background:var(--blue);color:#fff;font:500 14px Prompt;text-align:left;padding:10px 12px}
+td{padding:11px 12px;border-top:1px solid var(--line);vertical-align:middle;font-size:15px}
+tr:hover td{background:#f7faff}
+td.n{text-align:right;white-space:nowrap}
+.code{background:#e5efff;color:var(--blue2);border-radius:6px;padding:2px 8px;font:600 13px Prompt;white-space:nowrap}
+.st{border-radius:20px;padding:3px 10px;font-size:13px;white-space:nowrap;font-weight:600}
+.st.done{background:#e3f6ea;color:#146c3b}.st.run{background:#fff0dd;color:#b35c00}
+.role{border-radius:8px;padding:3px 10px;font-size:13px;background:#e5efff;color:var(--blue2);white-space:nowrap}
+.role.co{background:#e3f6ea;color:#146c3b}
+.pager{display:flex;gap:6px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.pager button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer}
+.pager button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+aside .card{padding:16px;margin-bottom:14px}
+aside .pt{background:var(--blue2);color:#fff;border-radius:12px;padding:10px 14px;font:600 16px Prompt;margin-bottom:14px}
+aside h4{font:600 16px Prompt;color:var(--blue2);margin:0 0 10px}
+aside ol{list-style:none;padding:0;margin:0;counter-reset:s}
+aside ol li{counter-increment:s;position:relative;padding-left:38px;margin-bottom:12px;font-size:14px;color:var(--mute)}
+aside ol li::before{content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font:600 14px Prompt}
+aside ol li b{display:block;color:var(--ink);font-size:15px}
+aside ul{padding-left:0;list-style:none;margin:0}aside ul li{padding-left:24px;position:relative;font-size:14px;margin-bottom:7px}
+aside ul li::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:700}
+aside .pink{background:#fff1f5;border-color:#f6cfdc}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.info div{background:var(--sky);border-radius:12px;padding:10px 14px}.info small{color:var(--mute);font-size:13px;display:block}.info b{font:600 16px Prompt}
+.tags{display:flex;flex-wrap:wrap;gap:6px}.tag{background:#eef3fb;border-radius:20px;padding:3px 11px;font-size:13px}
+.sdg{color:#fff;border-radius:8px;padding:3px 9px;font:600 13px Prompt}
+.evi{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line);gap:10px}
+.lock{font-size:12px;color:#8a4b00;background:#fff4e0;border-radius:6px;padding:2px 8px;white-space:nowrap}
+.back{display:inline-flex;margin-bottom:12px}
+.chips{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+.pcard{flex:0 0 180px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center}
+.pcard .lg{width:56px;height:56px;border-radius:50%;margin:0 auto 8px;display:grid;place-items:center;font:600 18px Prompt;color:#fff}
+.legend div{display:flex;justify-content:space-between;gap:8px;padding:5px 0;font-size:15px}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px}
+.login{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:24px;align-items:center;background:linear-gradient(120deg,#dceaff,#f7fbff);border-radius:20px;padding:28px;border:1px solid var(--line)}
+.login form{background:#fff;border-radius:18px;padding:26px;box-shadow:0 10px 30px #1453b51a;display:flex;flex-direction:column;gap:12px}
+.ms{display:grid;grid-template-columns:repeat(2,9px);gap:2px}.ms i{width:9px;height:9px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:15px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;max-width:90vw}
+.toast.on{opacity:1}
+footer{text-align:center;color:var(--mute);font-size:13px;padding:20px;border-top:1px solid var(--line);background:#fff}
+.view{animation:f .25s ease}@keyframes f{from{opacity:0;transform:translateY(6px)}}
+@media(prefers-reduced-motion:reduce){.view{animation:none}.fac{transition:none}}
+@media(max-width:1050px){.wrap{grid-template-columns:minmax(0,1fr)}aside{order:2}}
+@media(max-width:760px){nav.menu{position:static}nav.menu a{padding:7px 10px;font-size:14px}.search,.grid2,.login{grid-template-columns:minmax(0,1fr)}.top svg{display:none}.ttl{border:0;padding:0}.emb small{display:none}}
+@media(max-width:600px){table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 12px;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;color:var(--mute)}.stack td:empty{display:none}.stack tr+tr{border-top:1px solid var(--line)}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<div class="demo-bar">ต้นแบบ (Prototype) — ข้อมูลทั้งหมดในหน้านี้เป็นข้อมูลสมมติ เพื่อแสดงรูปแบบหน้าจอเท่านั้น</div>
+<header class="top">
+  <div class="emb"><div class="mark">มข.</div><div><b>KKU</b><small>มหาวิทยาลัยขอนแก่น<br>KHON KAEN UNIVERSITY</small></div></div>
+  <div class="ttl"><h1>ระบบบริหารจัดการและแสดงผลการดำเนินงานบริการวิชาการ</h1><p>Academic Service Performance &amp; Impact Management System</p></div>
+  <svg viewBox="0 0 360 90" preserveAspectRatio="xMaxYMax meet" aria-hidden="true"><defs><linearGradient id="sk" x1="0" x2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#d9e9ff"/></linearGradient></defs><rect width="360" height="90" fill="url(#sk)"/><g fill="#5fa33a"><circle cx="60" cy="62" r="18"/><circle cx="85" cy="56" r="22"/><circle cx="330" cy="58" r="20"/><circle cx="350" cy="64" r="16"/></g><path d="M150 40 L220 14 L290 40Z" fill="#e0742b"/><path d="M158 40 L220 18 L282 40Z" fill="#f29548"/><rect x="165" y="40" width="110" height="34" fill="#f5f1ea"/><g fill="#7fa9d8"><rect x="174" y="46" width="12" height="20"/><rect x="192" y="46" width="12" height="20"/><rect x="210" y="46" width="20" height="28"/><rect x="236" y="46" width="12" height="20"/><rect x="254" y="46" width="12" height="20"/></g><rect y="74" width="360" height="16" fill="#8cc163"/></svg>
+</header>
+<nav class="menu" id="menu">
+  <a href="#home" data-r="home">⌂ หน้าหลัก</a>
+  <a href="#about" data-r="about">ⓘ เกี่ยวกับระบบ</a>
+  <a href="#projects" data-r="projects">▤ โครงการบริการวิชาการ</a>
+  <a href="#people" data-r="people">◉ บุคลากรด้านบริการวิชาการ</a>
+  <a href="#network" data-r="network">⌘ เครือข่ายความร่วมมือ</a>
+  <a href="#login" data-r="login">➜ เข้าสู่ระบบ</a>
+  <span class="sp"></span>
+  <button id="tgl" type="button" title="แสดง/ซ่อนคำอธิบายหน้า">คำอธิบายหน้า</button>
+</nav>
+<div class="wrap" id="wrap"><main id="main"></main><aside id="aside"></aside></div>
+<footer>ระบบนี้จัดทำโดย ศูนย์ส่งเสริมวิสาหกิจและสังคมยั่งยืน ฝ่ายวิสาหกิจและสังคมยั่งยืน มหาวิทยาลัยขอนแก่น</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+{
+const FAC=[
+ ['เกษ','คณะเกษตรศาสตร์','#2e8b57'],['เทค','คณะเทคโนโลยี','#1453b5'],['วศ','คณะวิศวกรรมศาสตร์','#8b2d1f'],
+ ['บช','คณะบริหารธุรกิจและการบัญชี','#0f7c8c'],['ศป','คณะศิลปกรรมศาสตร์','#b5479c'],['สธ','คณะสาธารณสุขศาสตร์','#e07b1a'],
+ ['พย','คณะพยาบาลศาสตร์','#5a6bd6'],['ศษ','คณะศึกษาศาสตร์','#3a8f2e'],['มส','คณะมนุษยศาสตร์และสังคมศาสตร์','#7b4fd6'],
+ ['สถ','คณะสถาปัตยกรรมศาสตร์','#9a6b2f'],['วก','วิทยาลัยการปกครองท้องถิ่น','#c8372d'],['สพ','คณะสัตวแพทยศาสตร์','#26867a']];
+const facStat=[[28,24,3.2],[31,27,4.1],[25,19,5.6],[22,18,2.4],[17,14,1.6],[20,17,2.1],[14,12,1.3],[19,16,1.5],[18,15,1.2],[12,10,1.9],[21,13,2.6],[19,15,2.2]];
+const PEOPLE=[
+ ['ผศ.ดร.สมศรี ใจงาม',1,'เทคโนโลยีอาหาร การแปรรูปผลิตภัณฑ์ชุมชน',12,'หัวหน้าโครงการ'],
+ ['รศ.ดร.ประเสริฐ มั่นคง',0,'เทคโนโลยีการผลิตพืช เกษตรอินทรีย์',8,'ผู้ร่วมโครงการ'],
+ ['ผศ.ดร.วรรณา ศรีสุข',3,'การจัดการธุรกิจชุมชน ผู้ประกอบการ SME',10,'หัวหน้าโครงการ'],
+ ['ผศ.ดร.ธนพล แก้วมณี',2,'พลังงานทดแทน วิศวกรรมเพื่อชุมชน',6,'ผู้ร่วมโครงการ'],
+ ['อ.ดร.ปิยะนุช บุญมา',4,'การออกแบบผลิตภัณฑ์ อัตลักษณ์ท้องถิ่น',5,'ผู้ร่วมโครงการ'],
+ ['รศ.ดร.สุรชัย พรหมวงศ์',5,'สุขภาพชุมชน ผู้สูงอายุ',9,'หัวหน้าโครงการ'],
+ ['ผศ.กิตติ ชัยมงคล',10,'การบริหารท้องถิ่น การมีส่วนร่วม',7,'หัวหน้าโครงการ'],
+ ['อ.ดร.อรุณี ทองดี',8,'ภาษาและวัฒนธรรมท้องถิ่น',4,'ผู้ร่วมโครงการ'],
+ ['ผศ.ดร.ชัยวัฒน์ ศรีวงศ์',9,'ภูมิสถาปัตยกรรม ชุมชนน่าอยู่',3,'ผู้ร่วมโครงการ'],
+ ['รศ.ดร.มาลี เพชรรัตน์',6,'การพยาบาลชุมชน',6,'หัวหน้าโครงการ'],
+ ['อ.ดร.ณัฐพล วงศ์ใหญ่',7,'เทคโนโลยีการศึกษา ครูในชุมชน',4,'ผู้ร่วมโครงการ'],
+ ['ผศ.ดร.ศิริพร คำแสน',11,'สุขภาพสัตว์ ปศุสัตว์รายย่อย',5,'หัวหน้าโครงการ']];
+const SDGC={1:'#e5243b',2:'#dda63a',3:'#4c9f38',4:'#c5192d',6:'#26bde2',7:'#d9a800',8:'#a21942',9:'#fd6925',11:'#fd9d24',12:'#bf8b2e',13:'#3f7e44',15:'#56c02b',17:'#19486a'};
+const PROJ=[
+ ['การพัฒนาผลิตภัณฑ์อาหารชุมชนเพื่อเพิ่มมูลค่า',1,0,450000,'ส่วนงานภายใน','วิสาหกิจชุมชนแม่บ้าน','บ้านโนนเขียว','ในเมือง','เมืองขอนแก่น','ขอนแก่น',1,[2,8,12],120,2569],
+ ['การถ่ายทอดเทคโนโลยีการผลิตโปรตีนจากแมลง BSF',0,1,320000,'ภายนอก-ภาครัฐ','เกษตรกรผู้เลี้ยงสัตว์','บ้านหนองกุง','ท่าพระ','เมืองขอนแก่น','ขอนแก่น',1,[2,12],85,2569],
+ ['การส่งเสริมและพัฒนาผู้ประกอบการ Startup และ SME',3,2,600000,'ส่วนกลาง มข.','ผู้ประกอบการรายย่อย','ตลาดชุมชนศิลา','ศิลา','เมืองขอนแก่น','ขอนแก่น',1,[8,9],150,2569],
+ ['การพัฒนาผลิตภัณฑ์ผ้าไหมชุมชน',4,4,280000,'ภายนอก-เอกชน','กลุ่มทอผ้าไหม','บ้านโคกสูง','ชนบท','ชนบท','ขอนแก่น',1,[8,12],60,2569],
+ ['การจัดการน้ำเพื่อการเกษตรอย่างยั่งยืน',2,3,520000,'ภายนอก-ภาครัฐ','เกษตรกรผู้ใช้น้ำ','บ้านท่าขอนยาง','ท่าขอนยาง','กันทรวิชัย','มหาสารคาม',0,[6,13],200,2569],
+ ['ชุมชนสุขภาพดีด้วยการดูแลผู้สูงอายุ',5,5,350000,'ส่วนงานภายใน','อาสาสมัครสาธารณสุข','บ้านดอนหัน','ดอนหัน','เมืองขอนแก่น','ขอนแก่น',1,[3,11],180,2569],
+ ['ธรรมาภิบาลท้องถิ่นและการมีส่วนร่วมของประชาชน',10,6,240000,'ภายนอก-ภาครัฐ','บุคลากร อปท.','อบต.บ้านค้อ','บ้านค้อ','เมืองขอนแก่น','ขอนแก่น',0,[11,17],95,2569],
+ ['พยาบาลชุมชนสู่การดูแลโรคเรื้อรัง',6,9,300000,'ส่วนกลาง มข.','ผู้ป่วยโรคเรื้อรังและญาติ','บ้านโนนทัน','บ้านเป็ด','เมืองขอนแก่น','ขอนแก่น',1,[3],140,2569],
+ ['ครูชุมชนกับสื่อการเรียนรู้ดิจิทัล',7,10,180000,'ส่วนงานภายใน','ครูโรงเรียนขนาดเล็ก','โรงเรียนบ้านโคกฟันโปง','ภูเวียง','ภูเวียง','ขอนแก่น',1,[4],75,2569],
+ ['ภาษาและวัฒนธรรมอีสานสู่การท่องเที่ยวชุมชน',8,7,210000,'ภายนอก-เอกชน','ผู้ประกอบการท่องเที่ยวชุมชน','บ้านเชียง','บ้านเชียง','หนองหาน','อุดรธานี',0,[8,11],90,2569],
+ ['พื้นที่สาธารณะน่าอยู่สำหรับชุมชนเมือง',9,8,260000,'ภายนอก-ภาครัฐ','ชุมชนเมือง','ชุมชนโนนหนองวัด','ในเมือง','เมืองขอนแก่น','ขอนแก่น',1,[11],110,2568],
+ ['สุขภาพสัตว์สำหรับเกษตรกรรายย่อย',11,11,230000,'ส่วนกลาง มข.','เกษตรกรเลี้ยงโคกระบือ','บ้านหนองแวง','พระลับ','เมืองขอนแก่น','ขอนแก่น',1,[2,15],130,2568]
+].map((r,i)=>({id:'as'+String(r[13]).slice(2)+String(i+1).padStart(3,'0'),code:'AS-'+r[13]+'-'+String(i+1).padStart(3,'0'),name:r[0],fac:r[1],lead:r[2],budget:r[3],src:r[4],target:r[5],grp:r[6],tambon:r[7],amphoe:r[8],prov:r[9],done:r[10],sdg:r[11],n:r[12],year:r[13]}));
+const NET=[['จังหวัดขอนแก่น','ภาครัฐ'],['ธนาคารออมสิน','ภาคเอกชน'],['กรมส่งเสริมการเกษตร','ภาครัฐ'],['สมาพันธ์ SME ไทย','ภาคเอกชน'],['วิสาหกิจชุมชนบ้านโคกสูง','ภาคประชาสังคม/ชุมชน'],['มหาวิทยาลัยมหาสารคาม','สถาบันการศึกษา']];
+const TC={'ภาครัฐ':'#1453b5','ภาคเอกชน':'#f08a1c','ภาคประชาสังคม/ชุมชน':'#7b4fd6','สถาบันการศึกษา':'#1f9d55'};
+const ic={u:'<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="8" r="4"/><path d="M1 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/><circle cx="18" cy="9" r="3" opacity=".7"/></svg>',
+ c:'<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><circle cx="10" cy="8" r="4"/><path d="M2 21c0-4.4 3.6-7 8-7 1.6 0 3 .3 4.2 1L11 21z"/><path d="M14 18l2.5 2.5L22 15" stroke="currentColor" stroke-width="2.4" fill="none"/></svg>',
+ f:'<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M2 5h8l2 2h10v13H2z"/></svg>',
+ p:'<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>',
+ h:'<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M3 21V9l6-4v4l6-4v4l6-4v16z"/></svg>'};
+const fmt=n=>n.toLocaleString('th-TH');
+const kpi=(cls,i,v,u,l)=>`<div class="kpi ${cls}"><i>${ic[i]}</i><div><b>${v} <span>${u}</span></b><small>${l}</small></div></div>`;
+const yearSel=id=>`<label class="fy"><span>ปีงบประมาณ</span><select id="${id}"><option>2569</option><option>2568</option><option>ทุกปี</option></select></label>`;
+const fyFilter=v=>p=>v==='ทุกปี'||p.year==v;
+const sdg=s=>s.map(n=>`<span class="sdg" style="background:${SDGC[n]}">SDG ${n}</span>`).join(' ');
+const st=d=>d?'<span class="st done">ดำเนินการแล้ว</span>':'<span class="st run">อยู่ระหว่างดำเนินการ</span>';
+const facOpts=`<option value="">ทั้งหมด</option>`+FAC.map((f,i)=>`<option value="${i}">${f[1]}</option>`).join('');
+const toast=t=>{const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2600)};
+const hero=`<svg viewBox="0 0 400 190" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs><linearGradient id="hs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bcd9ff"/><stop offset="1" stop-color="#eef6ff"/></linearGradient></defs><rect width="400" height="190" fill="url(#hs)"/><circle cx="330" cy="40" r="22" fill="#fff8d6"/><g fill="#4f9a34"><circle cx="40" cy="120" r="34"/><circle cx="80" cy="108" r="30"/><circle cx="370" cy="116" r="32"/></g><g fill="#3a7a26"><rect x="37" y="130" width="6" height="40"/><rect x="367" y="128" width="6" height="40"/></g><path d="M110 98 L235 40 L360 98Z" fill="#d9662a"/><path d="M122 98 L235 48 L348 98Z" fill="#f08a3a"/><path d="M235 48 L348 98 L300 98Z" fill="#c9561f" opacity=".5"/><rect x="132" y="98" width="206" height="62" fill="#f8f4ec"/><rect x="132" y="98" width="206" height="6" fill="#e2dccf"/><g fill="#6f9fd6"><rect x="146" y="112" width="20" height="32" rx="3"/><rect x="176" y="112" width="20" height="32" rx="3"/><rect x="220" y="110" width="30" height="50" rx="4"/><rect x="274" y="112" width="20" height="32" rx="3"/><rect x="304" y="112" width="20" height="32" rx="3"/></g><rect y="160" width="400" height="30" fill="#8cc163"/><path d="M200 190 L225 160 L245 160 L270 190Z" fill="#e8e2d4"/></svg>`;
+
+const PAGES={
+home:()=>{const ps=PROJ.filter(p=>p.year==2569),tot=facStat.reduce((a,b)=>a+b[0],0);
+return [`<div class="ph"><div><h2>ภาพรวมบริการวิชาการ</h2><p>สรุปผลการดำเนินงานระดับมหาวิทยาลัย</p></div>${yearSel('fy')}</div>
+<div class="kpis">${kpi('k1','u','2,000','คน','บุคลากรสายวิชาการ')}${kpi('k2','c','200','คน','บุคลากรที่ดำเนินงานบริการวิชาการ')}${kpi('k3','f','246','โครงการ','โครงการบริการวิชาการ')}${kpi('k4','p','200','ตำบล','พื้นที่ดำเนินงาน')}</div>
+<div class="search"><div class="in"><h3>ค้นหาข้อมูลบริการวิชาการ</h3><p>ค้นหาได้จากชื่อโครงการ ชื่อบุคลากร คณะและหน่วยงาน หรือรหัสโครงการ</p>
+<div class="row"><a class="btn bp" href="#projects">ค้นหาโครงการ ⌕</a><a class="btn bo" href="#people">ค้นหาบุคลากร ◉</a></div></div>${hero}</div>
+<div class="sec"><h3>คณะ/ส่วนงานที่ดำเนินงานบริการวิชาการ</h3><button class="btn bo bs" id="allf">ดูทั้งหมด →</button></div>
+<div class="facs" id="facs"></div>`,()=>{
+ const draw=all=>{document.getElementById('facs').innerHTML=FAC.slice(0,all?99:6).map((f,i)=>{const s=facStat[i];return `<div class="fac" data-f="${i}"><div class="h"><span style="background:${f[2]}">${f[0]}</span><h4>${f[1]}</h4></div><dl><div><dt>โครงการ</dt><dd>${s[0]}</dd></div><div><dt>บุคลากร</dt><dd>${s[1]} คน</dd></div><div><dt>งบประมาณ</dt><dd>${s[2]} ลบ.</dd></div></dl><div class="bar" title="สัดส่วนโครงการ"><i style="width:${Math.round(s[0]/31*100)}%"></i></div></div>`}).join('')};
+ draw(false);const b=document.getElementById('allf');b.onclick=()=>{b.dataset.a=b.dataset.a?'':'1';draw(!!b.dataset.a);b.textContent=b.dataset.a?'แสดงน้อยลง':'ดูทั้งหมด →'};
+ document.getElementById('facs').onclick=e=>{const c=e.target.closest('.fac');if(c){sessionFac=c.dataset.f;location.hash='projects'}}}]},
+about:()=>[`<div class="ph"><div><h2>เกี่ยวกับระบบ</h2><p>ข้อมูลภาพรวม วัตถุประสงค์ ผู้จัดทำ และประโยชน์ของระบบ</p></div></div>
+<div class="search" style="margin-bottom:16px">${hero}<div class="in"><h3 style="font-size:26px">ระบบบริหารจัดการและแสดงผลการดำเนินงานบริการวิชาการ</h3><p>Academic Service Performance &amp; Impact Management System</p></div></div>
+<div class="grid2"><div class="card"><h3 style="color:var(--blue2);margin-bottom:10px">ระบบนี้จัดทำโดย</h3><p style="font:600 22px Prompt;color:var(--blue2);margin:0">ศูนย์ส่งเสริมวิสาหกิจและสังคมยั่งยืน</p><p style="color:var(--mute)">ภายใต้ฝ่ายวิสาหกิจและสังคมยั่งยืน มหาวิทยาลัยขอนแก่น</p></div>
+<div class="card"><h3 style="color:var(--blue2);margin-bottom:10px">วัตถุประสงค์ของระบบ</h3><p style="margin:0">เพื่อรวบรวม จัดการ และแสดงผลข้อมูลการดำเนินงานบริการวิชาการของมหาวิทยาลัยขอนแก่น อย่างเป็นระบบ ถูกต้อง ทันสมัย และนำไปใช้ประโยชน์ในการติดตาม ประเมินผล และวางแผนพัฒนาในอนาคต</p></div></div>
+<div class="card" style="margin-top:16px"><h3 style="color:var(--blue2);margin-bottom:10px">คำถามเชิงบริหารที่ระบบนี้ต้องตอบได้</h3><p style="font:500 18px Prompt;margin:0">“มหาวิทยาลัยขอนแก่นมีบุคลากรสายวิชาการจำนวนเท่าใดที่นำองค์ความรู้ไปให้บริการสังคม ดำเนินงานในพื้นที่ใด สร้างผลลัพธ์อะไร และสามารถตรวจสอบย้อนกลับถึงผลงานของบุคลากรแต่ละคนได้อย่างไร”</p></div>
+<h3 style="color:var(--blue2);margin:20px 0 10px">ประโยชน์ของระบบ</h3>
+<div class="kpis">${[['k1','f','รวบรวม','ข้อมูลโครงการและบุคลากรไว้ในระบบเดียว'],['k2','u','ค้นหา','ข้อมูลได้รวดเร็วและครบถ้วน'],['k3','c','ติดตาม','ผลการดำเนินงานและตัวชี้วัดอย่างเป็นระบบ'],['k4','p','วิเคราะห์','ผลลัพธ์และผลกระทบต่อสังคม'],['k1','h','จัดทำรายงาน','เพื่อการบริหารและการเผยแพร่']].map(x=>`<div class="kpi ${x[0]}"><i>${ic[x[1]]}</i><div><b style="font-size:20px">${x[2]}</b><small>${x[3]}</small></div></div>`).join('')}</div>`],
+projects:()=>{const fi=sessionFac;sessionFac='';return [`<div class="ph"><div><h2>โครงการบริการวิชาการ</h2><p>ค้นหาโครงการ ดูรายละเอียด และผลการดำเนินงานทั้งหมด</p></div></div>
+<div class="kpis">${kpi('k1','f','246','โครงการ','โครงการบริการวิชาการทั้งหมด')}${kpi('k2','c','210','โครงการ','ดำเนินการแล้ว')}${kpi('k3','h','36','โครงการ','อยู่ระหว่างดำเนินการ')}${kpi('k4','p','200','ตำบล','พื้นที่ดำเนินงาน')}</div>
+<div class="filters card"><div class="q"><input type="text" id="q" placeholder="ค้นหา ชื่อโครงการ / ชื่อบุคลากร / คณะ / รหัสโครงการ"><button class="btn bp" id="go">ค้นหา</button></div>
+<label>ปีงบประมาณ<select id="fy"><option>2569</option><option>2568</option><option>ทุกปี</option></select></label>
+<label>สถานะโครงการ<select id="fs"><option value="">ทั้งหมด</option><option value="1">ดำเนินการแล้ว</option><option value="0">อยู่ระหว่างดำเนินการ</option></select></label>
+<label>หน่วยงาน<select id="ff">${facOpts}</select></label><button class="btn bo" id="rs">↻ รีเซ็ต</button></div>
+<p class="res" id="cnt"></p><table class="stack"><thead><tr><th>รหัสโครงการ</th><th>ชื่อโครงการ</th><th>หน่วยงาน</th><th>หัวหน้าโครงการ</th><th>พื้นที่ดำเนินงาน</th><th>งบประมาณ (บาท)</th><th>สถานะ</th><th>ดำเนินการ</th></tr></thead><tbody id="tb"></tbody></table>
+<div class="pager"><button class="on">1</button><button>2</button><button>3</button><button>…</button><button>25</button></div>`,()=>{
+ const $=id=>document.getElementById(id);if(fi)$('ff').value=fi;
+ const run=()=>{const q=$('q').value.trim(),y=$('fy').value,s=$('fs').value,f=$('ff').value;
+  const r=PROJ.filter(fyFilter(y)).filter(p=>(s===''||p.done==s)&&(f===''||p.fac==f)&&(!q||(p.name+p.code+FAC[p.fac][1]+PEOPLE[p.lead][0]).includes(q)));
+  $('cnt').textContent='ผลการค้นหา '+r.length+' รายการ (ตัวอย่าง)';
+  $('tb').innerHTML=r.map(p=>`<tr><td><span class="code">${p.code}</span></td><td><b>${p.name}</b></td><td>${FAC[p.fac][1]}</td><td>${PEOPLE[p.lead][0]}</td><td>${p.prov}<br><small>อ.${p.amphoe} • ต.${p.tambon}</small></td><td class="n">${fmt(p.budget)}</td><td>${st(p.done)}</td><td><a class="btn bo bs" href="#p-${p.id}">ดูรายละเอียด ›</a></td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--mute)">ไม่พบโครงการตามเงื่อนไข</td></tr>'};
+ ['fy','fs','ff'].forEach(i=>$(i).onchange=run);$('go').onclick=run;$('q').onkeydown=e=>{if(e.key==='Enter')run()};
+ $('rs').onclick=()=>{$('q').value='';$('fy').value='2569';$('fs').value='';$('ff').value='';run()};run()}]},
+people:()=>[`<div class="ph"><div><h2>บุคลากรด้านบริการวิชาการ</h2><p>ค้นหาและดูข้อมูลบุคลากรที่ดำเนินงานบริการวิชาการของมหาวิทยาลัยขอนแก่น</p></div></div>
+<div class="kpis">${kpi('k1','u','2,000','คน','บุคลากรสายวิชาการของมหาวิทยาลัย')}${kpi('k2','c','200','คน','บุคลากรที่ดำเนินงานบริการวิชาการ')}${kpi('k3','f','246','โครงการ','โครงการที่มีบุคลากรเกี่ยวข้อง')}${kpi('k4','h','23','คณะ/หน่วยงาน','หน่วยงานที่มีการดำเนินงาน')}</div>
+<div class="filters card"><div class="q"><input type="text" id="q" placeholder="ค้นหาชื่อ-นามสกุล / สังกัด / ความเชี่ยวชาญ"><button class="btn bp" id="go">ค้นหา</button></div>
+<label>สังกัด (คณะ/หน่วยงาน)<select id="ff">${facOpts}</select></label>
+<label>บทบาทในโครงการ<select id="fr"><option value="">ทั้งหมด</option><option>หัวหน้าโครงการ</option><option>ผู้ร่วมโครงการ</option></select></label>
+<label>ปีงบประมาณ<select><option>2569</option><option>2568</option><option>ทุกปี</option></select></label><button class="btn bo" id="rs">↻ รีเซ็ต</button></div>
+<p class="res" id="cnt"></p><table class="stack"><thead><tr><th>ชื่อ-นามสกุล</th><th>สังกัด (คณะ/หน่วยงาน)</th><th>ความเชี่ยวชาญ / สาขา</th><th>จำนวนโครงการ (2567–2569)</th><th>บทบาทหลัก</th><th>ดูรายละเอียด</th></tr></thead><tbody id="tb"></tbody></table>
+<div class="pager"><button class="on">1</button><button>2</button><button>3</button><button>…</button><button>20</button></div>`,()=>{
+ const $=id=>document.getElementById(id);
+ const run=()=>{const q=$('q').value.trim(),f=$('ff').value,r=$('fr').value;
+  const L=PEOPLE.map((p,i)=>[p,i]).filter(([p])=>(f===''||p[1]==f)&&(r===''||p[4]===r)&&(!q||(p[0]+FAC[p[1]][1]+p[2]).includes(q)));
+  $('cnt').textContent='ผลการค้นหา '+L.length+' รายการ (ตัวอย่าง)';
+  $('tb').innerHTML=L.map(([p,i])=>`<tr><td><b>${p[0]}</b></td><td>${FAC[p[1]][1]}</td><td>${p[2]}</td><td class="n">${p[3]}</td><td><span class="role ${p[4]==='หัวหน้าโครงการ'?'':'co'}">${p[4]}</span></td><td><a class="btn bo bs" href="#u-${i}">ดูรายละเอียด ›</a></td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--mute)">ไม่พบบุคลากรตามเงื่อนไข</td></tr>'};
+ ['ff','fr'].forEach(i=>$(i).onchange=run);$('go').onclick=run;$('q').onkeydown=e=>{if(e.key==='Enter')run()};
+ $('rs').onclick=()=>{$('q').value='';$('ff').value='';$('fr').value='';run()};run()}],
+network:()=>{const T=[['ภาครัฐ',56],['ภาคเอกชน',32],['ภาคประชาสังคม/ชุมชน',24],['สถาบันการศึกษา',8]],C=2*Math.PI*60;let off=0;
+const arcs=T.map(([t,n])=>{const l=n/120*C,s=`<circle r="60" cx="80" cy="80" fill="none" stroke="${TC[t]}" stroke-width="26" stroke-dasharray="${l} ${C-l}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)"/>`;off+=l;return s}).join('');
+const R=[['ภาคตะวันออกเฉียงเหนือ',72],['ภาคกลาง',18],['ภาคเหนือ',12],['ภาคใต้',8],['ภาคตะวันออก',6],['อื่น ๆ (ต่างประเทศ/ออนไลน์)',4]];
+return [`<div class="ph"><div><h2>เครือข่ายความร่วมมือ</h2><p>ข้อมูลหน่วยงาน/องค์กรที่ร่วมดำเนินงานบริการวิชาการกับมหาวิทยาลัยขอนแก่น</p></div></div>
+<div class="kpis">${kpi('k1','u','120','หน่วยงาน','หน่วยงานเครือข่ายทั้งหมด')}${kpi('k2','h','56','หน่วยงาน','ภาครัฐ')}${kpi('k3','f','32','หน่วยงาน','ภาคเอกชน')}${kpi('k4','c','24','หน่วยงาน','ภาคประชาสังคม/ชุมชน/อื่น ๆ')}</div>
+<div class="filters card"><div class="q"><input type="text" placeholder="ค้นชื่อหน่วยงาน / ประเภทหน่วยงาน / พื้นที่ความร่วมมือ"><button class="btn bp">ค้นหา</button></div>
+<label>ประเภทหน่วยงาน<select><option>ทั้งหมด</option>${T.map(t=>`<option>${t[0]}</option>`).join('')}</select></label><label>พื้นที่ความร่วมมือ<select><option>ทั้งหมด</option>${R.map(r=>`<option>${r[0]}</option>`).join('')}</select></label><label>ปีงบประมาณ<select><option>2569</option><option>2568</option></select></label></div>
+<div class="grid2"><div class="card"><h3 style="color:var(--blue2);margin-bottom:12px">ประเภทเครือข่ายความร่วมมือ</h3><div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap"><svg viewBox="0 0 160 160" width="170" height="170" role="img" aria-label="สัดส่วนประเภทเครือข่าย">${arcs}<text x="80" y="78" text-anchor="middle" font-family="Prompt" font-size="28" font-weight="700" fill="#0b3d8c">120</text><text x="80" y="98" text-anchor="middle" font-family="Sarabun" font-size="13" fill="#5b6b85">หน่วยงาน</text></svg>
+<div class="legend" style="flex:1">${T.map(([t,n])=>`<div><span><i class="dot" style="background:${TC[t]}"></i>${t}</span><b>${(n/120*100).toFixed(1)}% (${n})</b></div>`).join('')}</div></div></div>
+<div class="card"><h3 style="color:var(--blue2);margin-bottom:12px">พื้นที่ความร่วมมือ</h3>${R.map(([r,n])=>`<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:15px"><span>${r}</span><b>${n} หน่วยงาน</b></div><div class="bar"><i style="width:${n/72*100}%"></i></div></div>`).join('')}</div></div>
+<div class="sec" style="margin-top:20px"><h3>หน่วยงานเครือข่ายล่าสุด</h3></div><div class="chips">${NET.map(([n,t])=>`<div class="pcard"><div class="lg" style="background:${TC[t]}">${n.replace(/^(จังหวัด|ธนาคาร|กรม|สมาพันธ์|วิสาหกิจชุมชน|มหาวิทยาลัย)/,'').slice(0,2)}</div><b style="font-size:15px">${n}</b><div style="margin-top:6px"><span class="tag">${t}</span></div></div>`).join('')}</div>`]},
+login:()=>[`<div class="login"><div>${hero}<h2 style="color:var(--blue2);font-size:clamp(24px,3vw,34px);margin-top:14px">ระบบบริหารจัดการและแสดงผลการดำเนินงานบริการวิชาการ</h2><p style="color:var(--mute)">Academic Service Performance &amp; Impact Management System</p></div>
+<form id="lf"><div style="text-align:center"><div style="font-size:34px">🔒</div><h3 style="font-size:26px;color:var(--blue2)">เข้าสู่ระบบ</h3><p style="color:var(--mute);margin:4px 0">สำหรับผู้ใช้งานที่ได้รับสิทธิ์</p></div>
+<input type="text" placeholder="ชื่อผู้ใช้ (KKU Account)" autocomplete="off"><input type="password" placeholder="รหัสผ่าน" autocomplete="off">
+<div style="display:flex;justify-content:space-between;font-size:14px"><label><input type="checkbox"> จดจำการเข้าสู่ระบบ</label><a href="#login">ลืมรหัสผ่าน ?</a></div>
+<button class="btn bp" type="submit">เข้าสู่ระบบ</button><div style="text-align:center;color:var(--mute);font-size:14px">หรือ</div>
+<button class="btn bo" type="button" id="sso"><span class="ms"><i style="background:#f25022"></i><i style="background:#7fba00"></i><i style="background:#00a4ef"></i><i style="background:#ffb900"></i></span>เข้าสู่ระบบด้วย KKU Account (Single Sign-On)</button></form></div>`,()=>{
+ document.getElementById('lf').onsubmit=e=>{e.preventDefault();toast('ต้นแบบ: ยังไม่เชื่อมต่อระบบหลังบ้าน')};document.getElementById('sso').onclick=()=>toast('ต้นแบบ: จะเชื่อม SSO (KKU Account) ในระบบจริง')}]
+};
+let sessionFac='';
+const projDetail=p=>{const t=[[p.lead,'หัวหน้าโครงการ',60],[(p.lead+3)%12,'ผู้ร่วมดำเนินการ',25],[(p.lead+7)%12,'ผู้ร่วมดำเนินการ',15]];
+return [`<a class="btn bo bs back" href="#projects">‹ กลับไปรายการโครงการ</a>
+<div class="card" style="margin-bottom:16px"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><span class="code">${p.code}</span>${st(p.done)}${sdg(p.sdg)}</div><h2 style="font-size:clamp(22px,2.6vw,30px);color:var(--blue2)">${p.name}</h2><p style="color:var(--mute);margin:6px 0 14px">${FAC[p.fac][1]} • ปีงบประมาณ ${p.year}</p>
+<div class="info"><div><small>ระยะเวลาโครงการ</small><b>1 ต.ค. ${p.year-1} – 30 ก.ย. ${p.year}</b></div><div><small>งบประมาณรวม</small><b>${fmt(p.budget)} บาท</b></div><div><small>แหล่งงบประมาณ</small><b>${p.src}</b></div><div><small>กลุ่มเป้าหมาย</small><b>${p.target} (${p.n} คน)</b></div></div></div>
+<div class="grid2"><div class="card"><h3 style="color:var(--blue2);margin-bottom:10px">พื้นที่ดำเนินงาน</h3><div class="info"><div><small>กลุ่ม/ชุมชน</small><b>${p.grp}</b></div><div><small>ตำบล</small><b>${p.tambon}</b></div><div><small>อำเภอ</small><b>${p.amphoe}</b></div><div><small>จังหวัด</small><b>${p.prov}</b></div></div></div>
+<div class="card"><h3 style="color:var(--blue2);margin-bottom:10px">ผู้รับผิดชอบโครงการ (สัดส่วน %)</h3>${t.map(([i,r,pc])=>`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:15px"><a href="#u-${i}">${PEOPLE[i][0]}</a><span>${r} <b>${pc}%</b></span></div><div class="bar"><i style="width:${pc}%"></i></div></div>`).join('')}</div></div>
+<div class="card" style="margin-top:16px"><h3 style="color:var(--blue2);margin-bottom:10px">วัตถุประสงค์ / กิจกรรม / ผลผลิต / ผลลัพธ์ / ผลกระทบ</h3>
+<div class="info"><div><small>วัตถุประสงค์</small>เพื่อถ่ายทอดองค์ความรู้และยกระดับศักยภาพของ${p.target}</div><div><small>กิจกรรม</small>อบรมเชิงปฏิบัติการ 3 ครั้ง และติดตามผลในพื้นที่</div><div><small>ผลผลิต</small>ผู้เข้าร่วม ${p.n} คน ได้รับการอบรม</div><div><small>ผลลัพธ์</small>ผู้เข้าร่วมนำความรู้ไปใช้ได้จริง ร้อยละ 80</div></div>
+<div class="tags" style="margin-top:12px"><span class="tag">ผลกระทบทางเศรษฐกิจ</span><span class="tag">ผลกระทบทางสังคม</span><span class="tag">SROI: 1 : 3.25 (เฉพาะโครงการที่มีการประเมิน)</span></div></div>
+<div class="grid2" style="margin-top:16px"><div class="card"><h3 style="color:var(--blue2);margin-bottom:10px">หน่วยงานร่วมดำเนินการ</h3><div class="tags"><span class="tag">ภายใน: ${FAC[(p.fac+1)%12][1]}</span><span class="tag" style="background:#e5efff">ภายนอก (ภาครัฐ): องค์การบริหารส่วนตำบล${p.tambon}</span><span class="tag" style="background:#fff0dd">ภายนอก (ภาคเอกชน): บริษัทตัวอย่าง จำกัด</span></div></div>
+<div class="card"><h3 style="color:var(--blue2);margin-bottom:4px">หลักฐานและเอกสารรับรอง</h3>${['หนังสือนำส่งจากคณะ.pdf','ข้อเสนอ/รายงานผลการดำเนินงาน.pdf','หนังสือรับรองโดยรองอธิการบดี.pdf','ภาพกิจกรรม (12 ภาพ)'].map(f=>`<div class="evi"><span>📄 ${f}</span><span class="lock">เฉพาะผู้มีสิทธิ์</span></div>`).join('')}</div></div>`]};
+const personDetail=i=>{const p=PEOPLE[i],ps=PROJ.filter(x=>x.lead==i||(x.lead+3)%12==i||(x.lead+7)%12==i);
+return [`<a class="btn bo bs back" href="#people">‹ กลับไปรายชื่อบุคลากร</a>
+<div class="card" style="margin-bottom:16px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center"><div><h2 style="font-size:clamp(22px,2.6vw,30px);color:var(--blue2)">${p[0]}</h2><p style="color:var(--mute);margin:6px 0">${FAC[p[1]][1]}</p><div class="tags">${p[2].split(' ').map(x=>`<span class="tag">${x}</span>`).join('')}</div></div>
+<button class="btn bp" id="dl">⬇ ดาวน์โหลดสรุปผลงานรายบุคคล (PDF)</button></div>
+<div class="kpis">${kpi('k1','f',p[3],'โครงการ','โครงการทั้งหมด (2567–2569)')}${kpi('k2','c',ps.filter(x=>x.lead==i).length,'โครงการ','เป็นหัวหน้าโครงการ (ปีนี้)')}${kpi('k4','p',ps.length,'ตำบล','พื้นที่ที่ลงไปทำงาน')}</div>
+<p class="res">โครงการที่เกี่ยวข้อง</p><table class="stack"><thead><tr><th>รหัสโครงการ</th><th>ชื่อโครงการ</th><th>บทบาท</th><th>สัดส่วน</th><th>สถานะ</th><th></th></tr></thead><tbody>${ps.map(x=>{const l=x.lead==i;return `<tr><td><span class="code">${x.code}</span></td><td>${x.name}</td><td><span class="role ${l?'':'co'}">${l?'หัวหน้าโครงการ':'ผู้ร่วมดำเนินการ'}</span></td><td class="n">${l?60:(x.lead+3)%12==i?25:15}%</td><td>${st(x.done)}</td><td><a class="btn bo bs" href="#p-${x.id}">ดู ›</a></td></tr>`}).join('')||'<tr><td colspan="6">ยังไม่มีโครงการในปีนี้ (ตัวอย่าง)</td></tr>'}</tbody></table>`,()=>{document.getElementById('dl').onclick=()=>toast('ต้นแบบ: ระบบจริงจะสร้างไฟล์ PDF สรุปผลงานให้ดาวน์โหลด (ต้อง login ก่อน)')}]};
+
+const SIDE={
+home:['หน้าหลัก (Homepage)','แสดงภาพรวมผลการดำเนินงานบริการวิชาการ และจุดเชื่อมต่อหลักของระบบ',[['แถบเมนูหลัก (6 เมนู)','นำทางไปยัง 6 หน้าหลักของระบบ'],['ตัวเลือกปีงบประมาณ','เลือกปีเพื่อกรองข้อมูลภาพรวมและสถิติ'],['กล่องสรุปภาพรวม (KPI)','บุคลากรสายวิชาการ / บุคลากรที่ดำเนินงาน / โครงการ / พื้นที่ (ตำบล)'],['ค้นหาข้อมูลบริการวิชาการ','ค้นหาชื่อโครงการหรือบุคลากรได้ทันที'],['คณะ/ส่วนงาน','สรุปจำนวนโครงการ บุคลากร และงบประมาณรายคณะ กดเพื่อดูโครงการของคณะนั้น']]],
+about:['เกี่ยวกับระบบ','ระบบฐานข้อมูลและรายงานผลการดำเนินงานบริการวิชาการของมหาวิทยาลัยขอนแก่น',[['ข้อมูลบุคลากร','ผู้ดำเนินงาน (เชื่อมข้อมูลกับ HR)'],['ข้อมูลโครงการบริการวิชาการ',''],['ข้อมูลการมีส่วนร่วม','ภาคีเครือข่าย ภายใน-ภายนอก'],['ผลการดำเนินงานและตัวชี้วัด','ผลผลิต ผลลัพธ์ ผลกระทบ SROI'],['พื้นที่และผู้รับบริการ','กลุ่ม/ตำบล/อำเภอ/จังหวัด'],['หลักฐานและการรับรอง','เอกสาร ภาพ สื่อ']]],
+projects:['โครงการบริการวิชาการ','ค้นหาโครงการ ดูรายละเอียด และผลการดำเนินงาน',[['ค้นหาโครงการ','ค้นได้จากชื่อโครงการ ชื่อบุคลากร คณะ หรือรหัสโครงการ'],['กรองข้อมูล','เลือกปีงบประมาณ สถานะ และหน่วยงาน'],['แสดงรายการโครงการ','ข้อมูลสำคัญพร้อมสถานะการดำเนินงาน'],['ดูรายละเอียดโครงการ','ข้อมูลครบตามแบบบันทึก + หลักฐาน']]],
+people:['บุคลากรด้านบริการวิชาการ','ค้นหาและดูข้อมูลบุคลากรที่ดำเนินงานบริการวิชาการ',[['ค้นหาบุคลากร','ค้นด้วยชื่อ-นามสกุล สังกัด หรือความเชี่ยวชาญ'],['กรองข้อมูล','เลือกคณะ บทบาทในโครงการ และปีงบประมาณ'],['แสดงรายการบุคลากร','ไม่มีรูปถ่าย (ลดเรื่องข้อมูลส่วนบุคคล)'],['ดูรายละเอียดบุคลากร','โครงการที่เกี่ยวข้อง + ดาวน์โหลดสรุปผลงาน']]],
+network:['เครือข่ายความร่วมมือ','สรุปหน่วยงานที่ร่วมดำเนินงานบริการวิชาการ',[['แสดงภาพรวมเครือข่าย','แยกตามประเภทและพื้นที่ความร่วมมือ'],['ค้นหาและกรองข้อมูล','ชื่อ ประเภท พื้นที่ ปีงบประมาณ'],['หน่วยงานเครือข่ายล่าสุด','ดึงจากทะเบียนหน่วยงานกลาง (ไม่พิมพ์ซ้ำ)']]],
+login:['เข้าสู่ระบบ','สำหรับผู้ใช้งานที่ได้รับสิทธิ์',[['เข้าสู่ระบบ','ด้วยชื่อผู้ใช้ (KKU Account) และรหัสผ่าน'],['Single Sign-On (SSO)','ใช้บัญชี KKU Account (Microsoft) ของมหาวิทยาลัย'],['สิทธิ์การใช้งาน','ผู้ดูแลระบบ / เจ้าหน้าที่ศูนย์ฯ / ผู้บริหาร / อาจารย์ (ดูและโหลดผลงานตนเอง) / บุคคลทั่วไป (ดูภาพรวม)']]],
+p:['รายละเอียดโครงการ','แสดงข้อมูลครบตามแบบบันทึกของแอดมิน',[['ข้อมูลพื้นฐาน','รหัส สถานะ SDG ระยะเวลา งบประมาณ แหล่งงบ'],['พื้นที่และกลุ่มเป้าหมาย','กลุ่ม/ตำบล/อำเภอ/จังหวัด และจำนวนคน'],['ผู้รับผิดชอบ','หัวหน้าและผู้ร่วม พร้อมสัดส่วน % (รวม 100)'],['ผลการดำเนินงาน','ผลผลิต ผลลัพธ์ ผลกระทบ และ SROI'],['หลักฐาน','ไฟล์เปิดได้เฉพาะผู้มีสิทธิ์']]],
+u:['รายละเอียดบุคลากร','ผลงานบริการวิชาการรายบุคคล ตรวจสอบย้อนกลับได้',[['ข้อมูลบุคลากร','ชื่อ สังกัด ความเชี่ยวชาญ'],['สรุปตัวเลข','จำนวนโครงการ บทบาท และพื้นที่'],['โครงการที่เกี่ยวข้อง','พร้อมบทบาทและสัดส่วน %'],['ดาวน์โหลดสรุปผลงาน','ใช้เป็นหลักฐานรายงานผลงานรายบุคคล']]]};
+const side=k=>{const s=SIDE[k];return `<div class="pt">หน้า : ${s[0]}</div><div class="card"><h4>วัตถุประสงค์</h4><p style="margin:0;font-size:14px;color:var(--mute)">${s[1]}</p></div><div class="card"><h4>องค์ประกอบและการทำงาน</h4><ol>${s[2].map(([a,b])=>`<li><b>${a}</b>${b}</li>`).join('')}</ol></div><div class="card pink"><h4 style="color:var(--red)">หมายเหตุ (ต้นแบบ)</h4><p style="margin:0;font-size:14px">ข้อมูลโครงการและตัวเลขเป็นข้อมูลสมมติ เพื่อแสดงรูปแบบการทำงานของระบบเท่านั้น</p></div>`};
+
+const route=()=>{const h=location.hash.slice(1)||'home';let out,key=h;
+ if(h.startsWith('p-')){const p=PROJ.find(x=>x.id===h.slice(2));out=p?projDetail(p):PAGES.projects();key=p?'p':'projects'}
+ else if(h.startsWith('u-')){const i=+h.slice(2);out=PEOPLE[i]?personDetail(i):PAGES.people();key=PEOPLE[i]?'u':'people'}
+ else{if(!PAGES[h])key='home';out=PAGES[key]()}
+ const m=document.getElementById('main');m.innerHTML=`<div class="view">${out[0]}</div>`;
+ document.getElementById('aside').innerHTML=side(key);
+ const nk={p:'projects',u:'people'}[key]||key;document.querySelectorAll('#menu a').forEach(a=>a.classList.toggle('on',a.dataset.r===nk));
+ if(out[1])out[1]();window.scrollTo(0,0)};
+document.getElementById('tgl').onclick=()=>document.getElementById('wrap').classList.toggle('noaside');
+window.addEventListener('hashchange',route);route();
+}
+</script>
+</body>
+</html>
